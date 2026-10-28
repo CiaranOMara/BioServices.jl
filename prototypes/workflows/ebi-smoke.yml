@@ -1,0 +1,51 @@
+# Live tests of the three prototype EBI Proteins clients in the prototypes/ workspace.
+# Each package's test suite calls the real service.
+#
+# Kept here with the prototypes; GitHub only runs workflows in .github/workflows, so copy this file there to enable it.
+#
+# Spec drift (spec-drift.yml) catches changes to what the API says it does; this catches changes to what it actually does, such as an endpoint that is still in the spec but returns no data.
+# On failure it opens or comments on one issue.
+name: EBI Proteins smoke test
+on:
+  schedule:
+    - cron: '41 5 * * 1' # Mondays 05:41 UTC
+  workflow_dispatch:
+permissions: {}
+jobs:
+  smoke:
+    name: EBI Proteins live
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687 # v3.0.3
+        with:
+          version: '1'
+      - uses: julia-actions/cache@9353db09a0f2bbbdec6f41791918c75d37391b36 # v3.5.0
+      - name: Test EBIProteinsFunctions
+        run: julia --project=prototypes/EBIProteinsFunctions -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+      - name: Test EBIProteinsKwarg
+        if: success() || failure()
+        run: julia --project=prototypes/EBIProteinsKwarg -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+      - name: Test EBIProteinsOpenAPI
+        if: success() || failure()
+        run: julia --project=prototypes/EBIProteinsOpenAPI -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+      - name: Report failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="EBI Proteins live smoke test failed"
+          number=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+          body="The EBI Proteins smoke test failed: $RUN_URL"
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
