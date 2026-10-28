@@ -3,3 +3,7 @@
 module LiveTests
 include("live.jl")
 end
+
+module ExtensionTests
+include("extensions.jl")
+end
