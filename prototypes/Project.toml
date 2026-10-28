@@ -11,5 +11,6 @@
 # common/ holds what the generators share: the spec snapshot, spec parsing, a driver that runs the EBIProteinsFunctions and EBIProteinsKwarg generators, and their environment.
 # It is not a workspace member, because those generators run on JSON 0.21.
 # EBIProteinsOpenAPI's generator needs OpenAPI.jl and JSON 1.x, so it has its own environment in EBIProteinsOpenAPI/gen/.
+# workflows/ holds the spec drift and smoke workflows; copy them to .github/workflows to enable them.
 [workspace]
 projects = ["EBIProteinsFunctions", "EBIProteinsKwarg", "EBIProteinsOpenAPI"]
