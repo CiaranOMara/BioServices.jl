@@ -3,8 +3,9 @@
 #
 # - prototypes/EBIProteinsOpenAPI/gen/generate.jl, for the snapshot path and the query-name fixups
 # - prototypes/EBIProteinsFunctions/gen/generate.jl
+# - prototypes/EBIProteinsKwarg/gen/generate.jl
 #
-# The EBIProteinsFunctions generator adds its own code emission and runtime, and prototypes/common/generate.jl runs it.
+# The EBIProteinsFunctions and EBIProteinsKwarg generators add their own code emission and runtime, and prototypes/common/generate.jl runs both.
 
 import Downloads
 import JSON

@@ -2,7 +2,7 @@
 #
 #   julia --project=prototypes/common prototypes/EBIProteinsFunctions/gen/generate.jl
 #
-# prototypes/common/generate.jl runs this, and refreshes the snapshot with --fetch.
+# prototypes/common/generate.jl runs this and the EBIProteinsKwarg generator together, and refreshes the snapshot with --fetch.
 module EBIProteinsFunctionsGenerator
 
 include(joinpath(@__DIR__, "..", "..", "common", "shared.jl"))
@@ -62,7 +62,7 @@ end
 # Runtime code
 # ------------
 
-# The runtime the generated client needs, emitted into it.
+# Common to both prototypes; EBIProteinsKwarg's generator has its own copy, so each can change on its own.
 # @BASE_URL@ and @FORMATS@ are substituted.
 const COMMON_RUNTIME = raw"""
 const BASE_URL = "@BASE_URL@"
@@ -293,7 +293,7 @@ function emit(spec, spec_bytes)
     header(io, GENERATOR, spec, spec_bytes, ops)
     println(io, "\"\"\"")
     println(io, "Client for the EMBL-EBI Proteins REST API, generated from its OpenAPI specification, with one keyword function per operation.")
-    println(io, "A prototype for comparison with `EBIProteinsOpenAPI`.")
+    println(io, "A prototype for comparison with `EBIProteinsKwarg`.")
     println(io)
     println(io, "Every operation in the specification is a function named after its path, for example `proteins_by_accession(\"P08069\")` for `GET /proteins/{accession}`.")
     println(io, "Path parameters are positional; query parameters are keywords with the names the API uses.")
