@@ -3,24 +3,14 @@
 #   julia --project=prototypes/EBIProteinsOpenAPI/gen -e 'using Pkg; Pkg.instantiate()'
 #   julia --project=prototypes/EBIProteinsOpenAPI/gen prototypes/EBIProteinsOpenAPI/gen/generate.jl
 #
-# It has its own environment (gen/Project.toml), because OpenAPI.jl 1.x needs Julia 1.10 and JSON 1.x.
+# It has its own environment (gen/Project.toml), because OpenAPI.jl 1.x needs JSON 1.x and prototypes/common runs on JSON 0.21; prototypes/common/generate.jl does not run it.
 #
-# OpenAPI.jl rejects the published spec, so its defects are patched first, and the base URL is added as `servers`.
+# OpenAPI.jl rejects the published spec, so its defects are patched first (the same ones prototypes/common/shared.jl works around), and the base URL is added as `servers`.
 module EBIProteinsOpenAPIGenerator
 
 using OpenAPI
-import JSON
-import SHA
 
-const SPEC_PATH = joinpath(@__DIR__, "..", "..", "common", "openapi.json")
-# The spec has no `servers` entry, so the base URL is supplied here.
-const BASE_URL = "https://www.ebi.ac.uk/proteins/api"
-# Some query parameters carry their description as their `name`; these are the names the service actually accepts.
-const QUERY_NAME_FIXUPS = [
-    "Category type(s):" => "categories",
-    "Feature type(s):" => "types",
-    "PTM Confidence score(s):" => "confidence_score",
-]
+include(joinpath(@__DIR__, "..", "..", "common", "shared.jl"))
 
 const GENERATOR = "prototypes/EBIProteinsOpenAPI/gen/generate.jl"
 const OUT_PATH = normpath(joinpath(@__DIR__, "..", "src", "EBIProteinsOpenAPI.jl"))
