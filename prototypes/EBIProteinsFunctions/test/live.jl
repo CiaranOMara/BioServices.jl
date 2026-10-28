@@ -1,6 +1,6 @@
 # Live tests of EBIProteinsFunctions against the real service.
 #
-# The two prototypes' live tests follow one checklist: the same testsets, in the same order, with the same calls and checks wherever the client allows; only "style-specific" differs.
+# The three prototypes' live tests follow one checklist: the same testsets, in the same order, with the same calls and checks wherever the client allows; only "style-specific" differs.
 # They check the service, not the spec: an endpoint can stay in the spec and stop returning data (see the uniparc proteome case).
 # Without FASTX (Julia < 1.10) this file can be run on its own:
 #

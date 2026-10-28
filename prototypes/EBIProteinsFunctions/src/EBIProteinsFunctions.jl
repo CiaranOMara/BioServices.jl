@@ -4,7 +4,7 @@
 
 """
 Client for the EMBL-EBI Proteins REST API, generated from its OpenAPI specification, with one keyword function per operation.
-A prototype for comparison with `EBIProteinsOpenAPI`.
+A prototype for comparison with `EBIProteinsKwarg`.
 
 Every operation in the specification is a function named after its path, for example `proteins_by_accession("P08069")` for `GET /proteins/{accession}`.
 Path parameters are positional; query parameters are keywords with the names the API uses.

@@ -1,6 +1,6 @@
 # Live tests of EBIProteinsOpenAPI, the client OpenAPI.jl 1.x generates, against the real service.
 #
-# The two prototypes' live tests follow one checklist: the same testsets, in the same order, with the same calls and checks wherever the client allows; only "style-specific" differs.
+# The three prototypes' live tests follow one checklist: the same testsets, in the same order, with the same calls and checks wherever the client allows; only "style-specific" differs.
 # This client returns data for none of the calls, because the spec doesn't describe what the service sends.
 # So each check records how the call fails, with response validation on (the default client) and off.
 # If OpenAPI.jl or the spec changes, the tests fail and show what changed.
