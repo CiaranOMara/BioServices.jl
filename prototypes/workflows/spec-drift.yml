@@ -2,7 +2,7 @@
 #
 # Kept here with the prototypes; GitHub only runs workflows in .github/workflows, so copy this file there to enable it.
 #
-# Fetches the live spec, normalises it (sorted keys, so reordering is not drift), regenerates the three prototype clients in prototypes/ and, if anything changed, opens or updates one PR from the branch spec-drift/ebiproteins.
+# Fetches the live spec, normalises it (sorted keys, so reordering is not drift), regenerates the four prototype clients in prototypes/ and, if anything changed, opens or updates one PR from the branch spec-drift/ebiproteins.
 #
 # The branch is pushed over SSH with the DOCUMENTER_KEY deploy key (the key CompatHelper and TagBot already use), because pushes made with GITHUB_TOKEN do not trigger other workflows.
 # The SSH push triggers ci.yml's `push` run, whose status shows on the PR.
@@ -61,11 +61,12 @@ jobs:
             prototypes/EBIProteinsFunctions/src/EBIProteinsFunctions.jl
             prototypes/EBIProteinsKwarg/src/EBIProteinsKwarg.jl
             prototypes/EBIProteinsOpenAPI/src/EBIProteinsOpenAPI.jl
+            prototypes/EBIProteinsRestClient/src/EBIProteinsRestClient.jl
           commit-message: Update EBI Proteins spec snapshot and regenerate client
           title: EBI Proteins API spec changed
           body: |
             The live spec at https://www.ebi.ac.uk/proteins/api/openapi.json no longer matches `prototypes/common/openapi.json`.
-            This PR updates the snapshot and regenerates the `EBIProteinsFunctions`, `EBIProteinsKwarg` and `EBIProteinsOpenAPI` sources in `prototypes/`.
+            This PR updates the snapshot and regenerates the `EBIProteinsFunctions`, `EBIProteinsKwarg`, `EBIProteinsOpenAPI` and `EBIProteinsRestClient` sources in `prototypes/`.
 
             Review the spec diff for removed or renamed operations and parameters: those are breaking changes for users of the generated clients.
 

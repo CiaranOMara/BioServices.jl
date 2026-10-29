@@ -1,4 +1,4 @@
-# Live tests of the three prototype EBI Proteins clients in the prototypes/ workspace.
+# Live tests of the four prototype EBI Proteins clients in the prototypes/ workspace.
 # Each package's test suite calls the real service.
 #
 # Kept here with the prototypes; GitHub only runs workflows in .github/workflows, so copy this file there to enable it.
@@ -34,6 +34,9 @@ jobs:
       - name: Test EBIProteinsOpenAPI
         if: success() || failure()
         run: julia --project=prototypes/EBIProteinsOpenAPI -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+      - name: Test EBIProteinsRestClient
+        if: success() || failure()
+        run: julia --project=prototypes/EBIProteinsRestClient -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
       - name: Report failure
         if: failure()
         env:
