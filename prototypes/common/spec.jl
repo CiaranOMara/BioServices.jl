@@ -1,16 +1,8 @@
-# Shared by the prototype generators: the spec snapshot, its normalisation and parsing, and the docstring helpers that only depend on the spec.
-# Each prototype's generator includes this file:
-#
-# - prototypes/EBIProteinsOpenAPI/gen/generate.jl, for the snapshot path and the query-name fixups
-# - prototypes/EBIProteinsFunctions/gen/generate.jl
-# - prototypes/EBIProteinsKwarg/gen/generate.jl
-# - prototypes/EBIProteinsRestClient/gen/generate.jl
-#
-# The EBIProteinsFunctions, EBIProteinsKwarg and EBIProteinsRestClient generators add their own code emission and runtime, and prototypes/common/generate.jl runs them.
+# The EBI Proteins OpenAPI spec as the prototype generators see it: the snapshot, its normalisation, and the operations parsed from it with the spec's defects patched.
+# Every generator includes this file; prototypes/EBIProteinsOpenAPI/gen/generate.jl uses only the snapshot path, base URL and query-name fixups.
 
 import Downloads
 import JSON
-import SHA
 
 const SPEC_URL = "https://www.ebi.ac.uk/proteins/api/openapi.json"
 # The spec has no `servers` entry, so the base URL is supplied here.
@@ -208,115 +200,6 @@ function operations(spec)
     return ops
 end
 
-
-# Code emission
-# -------------
-
-# Text placed inside a "..." docstring.
-function doctext(s)
-    s = replace(s, "\r\n" => "\n")
-    s = replace(s, "\\" => "\\\\")
-    s = replace(s, "\$" => "\\\$")
-    s = replace(s, "\"" => "\\\"")
-    return join(rstrip.(split(s, '\n')), "\n")
-end
-
-function default_accept(op)
-    "application/json" in op.formats && return ":json"
-    isempty(op.formats) && return ":json"
-    f = op.formats[1]
-    for (mime, sym) in FORMATS
-        mime == f && return repr(sym)
-    end
-    return repr(f)
-end
-
-# The Julia type a parameter accepts, or "" for no restriction.
-# Many string parameters are integers or comma-separated lists in disguise (`taxid` has pattern ^[0-9]+(,[0-9]+)*$), so those also accept an Integer or a Vector; the aliases are defined in COMMON_RUNTIME.
-function julia_type(p)
-    s = p.schema
-    t = get(s, "type", "")
-    t == "integer" && return "Integer"
-    t == "number" && return "Real"
-    t == "boolean" && return "Bool"
-    t == "array" && return "AbstractVector"
-    t == "string" || return ""
-    pattern = get(s, "pattern", "")
-    pattern == "true|false" && return "Bool"
-    numeric = startswith(lstrip(pattern, '^'), "[0-9]+")
-    if occursin("(,", pattern)
-        return numeric ? "IntListParam" : "ListParam"
-    end
-    return numeric ? "IntParam" : "AbstractString"
-end
-
-optional_type(T) = isempty(T) ? "" : "::Union{Nothing, $T}"
-required_type(T) = isempty(T) ? "" : "::$T"
-
-function param_doc(p)
-    s = p.schema
-    bits = String[]
-    t = get(s, "type", "")
-    isempty(t) || push!(bits, haskey(s, "format") ? "$t/$(s["format"])" : t)
-    p.required && p.location == "query" && push!(bits, "required")
-    haskey(s, "default") && push!(bits, "default `$(JSON.json(s["default"]))`")
-    haskey(s, "enum") && push!(bits, "one of " * join(["`$(v)`" for v in s["enum"]], ", "))
-    haskey(s, "pattern") && push!(bits, "pattern `$(s["pattern"])`")
-    T = julia_type(p)
-    line = "- `$(p.name)$(required_type(T))`" * (isempty(bits) ? "" : " (spec: " * join(bits, "; ") * ")")
-    isempty(p.description) || (line *= ": " * replace(strip(p.description), r"\s*\n\s*" => " "))
-    return line
-end
-
-pageable(op) = op.method == "GET" && all(n -> any(p -> p.name == n, op.queryparams), ("offset", "size"))
-
-# The docstring body shared by both generators; `body` describes the request body argument.
-function operation_doc(op, signature, headings, body)
-    doc = IOBuffer()
-    println(doc, "    ", signature)
-    println(doc)
-    isempty(op.summary) || println(doc, doctext(op.summary), "\n")
-    isempty(op.description) || op.description == op.summary || println(doc, doctext(op.description), "\n")
-    tag = isempty(op.tags) ? "" : ", tag `$(op.tags[1])`"
-    println(doc, "`$(op.method) $(op.path)` (operationId `$(op.operation_id)`$tag)")
-    op.deprecated && println(doc, "\n**Deprecated** in the API specification.")
-    if !isempty(op.pathparams) || op.body !== nothing
-        println(doc, "\n# ", headings[1])
-        foreach(p -> println(doc, doctext(param_doc(p))), op.pathparams)
-        op.body === nothing || println(doc, "- `body`: request body, $(doctext(op.body)); ", body)
-    end
-    if !isempty(op.queryparams)
-        println(doc, "\n# ", headings[2])
-        foreach(p -> println(doc, doctext(param_doc(p))), op.queryparams)
-    end
-    println(doc, "\n# Response")
-    listed = isempty(op.formats) ? "none" : join(["`$f`" for f in op.formats], ", ")
-    print(doc, "Formats listed in the spec: $listed.")
-    isempty(op.response) || print(doc, "\nJSON schema: `$(op.response)`.")
-    pageable(op) && print(doc, "\nSearches can be iterated page by page with `paginate`.")
-    return String(take!(doc))
-end
-
-function print_docstring(io, text)
-    println(io, "\"\"\"")
-    println(io, text)
-    println(io, "\"\"\"")
-end
-
-function header(io, generator, spec, spec_bytes, ops)
-    info = spec["info"]
-    println(io, "# This file is generated by ", generator, " from prototypes/common/openapi.json.")
-    println(io, "# Do not edit it.")
-    println(io, "# Spec: ", info["title"], " ", info["version"], " (OpenAPI ", spec["openapi"], "), ",
-            length(ops), " operations, sha256 ", bytes2hex(SHA.sha256(spec_bytes)))
-    println(io)
-end
-
-# The runtime code each generator emits has @BASE_URL@ and @FORMATS@ placeholders.
-function substitute(runtime)
-    s = replace(runtime, "@BASE_URL@" => BASE_URL)
-    return replace(s, "@FORMATS@" => join(["$(repr(s)) => $(repr(m))" for (m, s) in FORMATS], ", "))
-end
 
 
 # Snapshot

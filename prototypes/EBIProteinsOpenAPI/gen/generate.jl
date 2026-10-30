@@ -5,12 +5,13 @@
 #
 # It has its own environment (gen/Project.toml), because OpenAPI.jl 1.x needs JSON 1.x and prototypes/common runs on JSON 0.21; prototypes/common/generate.jl does not run it.
 #
-# OpenAPI.jl rejects the published spec, so its defects are patched first (the same ones prototypes/common/shared.jl works around), and the base URL is added as `servers`.
+# OpenAPI.jl rejects the published spec, so its defects are patched first (the same ones prototypes/common/spec.jl works around), and the base URL is added as `servers`.
 module EBIProteinsOpenAPIGenerator
 
 using OpenAPI
+import SHA
 
-include(joinpath(@__DIR__, "..", "..", "common", "shared.jl"))
+include(joinpath(@__DIR__, "..", "..", "common", "spec.jl"))
 
 const GENERATOR = "prototypes/EBIProteinsOpenAPI/gen/generate.jl"
 const OUT_PATH = normpath(joinpath(@__DIR__, "..", "src", "EBIProteinsOpenAPI.jl"))

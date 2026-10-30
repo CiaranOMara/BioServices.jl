@@ -8,7 +8,7 @@
 # The SSH push triggers ci.yml's `push` run, whose status shows on the PR.
 # GITHUB_TOKEN is used only to open the PR, which requires "Allow GitHub Actions to create and approve pull requests" in the repository's Actions settings.
 #
-# If regeneration fails (for example the spec gains a defect prototypes/common/shared.jl does not patch), the job opens or comments on an issue instead.
+# If regeneration fails (for example the spec gains a defect prototypes/common/spec.jl does not patch), the job opens or comments on an issue instead.
 name: Spec drift
 on:
   schedule:
