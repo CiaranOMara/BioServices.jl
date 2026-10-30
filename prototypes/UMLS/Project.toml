@@ -1,0 +1,20 @@
+name = "UMLS"
+uuid = "21205520-061e-4dd7-b5cc-96c1df74efb4"
+authors = ["BioJulia"]
+version = "0.1.0"
+
+[deps]
+ServiceRuntime = "86855f08-4941-4f3a-af8b-57972381c89e"
+
+[sources]
+ServiceRuntime = {path = "../ServiceRuntime"}
+
+[compat]
+ServiceRuntime = "0.1"
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

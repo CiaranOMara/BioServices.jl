@@ -1,0 +1,254 @@
+# The UMLS Terminology Services REST API, written by hand from https://documentation.uts.nlm.nih.gov/rest/home.html, which publishes no OpenAPI spec.
+# prototypes/ServiceGen/generate.jl writes src/UMLS.jl from this file.
+#
+# Every request needs an API key from a UTS account, sent as the `apiKey` query parameter.
+# Responses wrap the result in {"pageSize", "pageNumber", "pageCount", "result"}.
+# Search and atom lists return one page of up to 200 results and have no paging; the documentation lists pageNumber and pageSize for definitions and relations, and the others below are paged on the assumption that they work the same way.
+
+[service]
+name = "UMLS"
+title = "the UMLS Terminology Services (UTS) REST API"
+docs = "https://documentation.uts.nlm.nih.gov/rest/home.html"
+base_url = "https://uts-ws.nlm.nih.gov/rest"
+formats = { json = "application/json" }
+auth = { in = "query", name = "apiKey", env = "UMLS_API_KEY" }
+envelope = "result"
+paging = { style = "page", number = "pageNumber", size = "pageSize", count = "pageCount" }
+
+# Path parameters.
+
+[params.version]
+default = "current"
+description = "The UMLS release, such as `2024AA`, back to `2008AA`; `current` is the latest."
+
+[params.CUI]
+description = "A UMLS concept identifier, such as `C0009044`."
+
+[params.AUI]
+description = "A UMLS atom identifier, such as `A8345234`."
+
+[params.source]
+description = "A source vocabulary abbreviation, such as `SNOMEDCT_US` or `MSH`."
+
+[params.id]
+description = "A code, source concept or source descriptor identifier in the source vocabulary."
+
+[params.TUI]
+description = "A semantic type identifier, such as `T109`."
+
+# Query parameters.
+
+[params.string]
+required = true
+description = "A term, such as `gestational diabetes`, or a code from a source vocabulary, such as `11687002`."
+
+[params.inputType]
+enum = ["atom", "code", "sourceConcept", "sourceDescriptor", "sourceUi", "tty"]
+description = """
+What `string` is; `atom` (a term) by default.
+Use `sourceUi` for a source identifier of unknown kind."""
+
+[params.returnIdType]
+enum = ["aui", "concept", "code", "sourceConcept", "sourceDescriptor", "sourceUi"]
+description = "The identifiers to return; `concept` (CUIs) by default."
+
+[params.searchType]
+enum = ["exact", "words", "leftTruncation", "rightTruncation", "normalizedString", "normalizedWords"]
+description = """
+How to match `string`; `words` by default.
+Use `exact` with source identifiers."""
+
+[params.semanticTypes]
+type = "list"
+sep = "|"
+description = "Semantic type tree number prefixes such as `A2.2`, TUIs such as `T046`, or names such as `Disease or Syndrome`."
+
+[params.semanticGroups]
+type = "list"
+sep = "|"
+description = "Semantic group names, such as `Disorders`."
+
+[params.partialSearch]
+type = "boolean"
+description = "Also return partial matches."
+
+[params.sabs]
+type = "list"
+description = "Source vocabularies to include, such as `[\"SNOMEDCT_US\", \"MSH\"]`; all by default."
+
+[params.targetSource]
+type = "list"
+description = "Source vocabularies to cross-walk to."
+
+[params.ttys]
+type = "list"
+description = "Term types to include, such as `PT`; all by default."
+
+[params.language]
+description = "A three-letter language code, such as `ENG`; all languages by default."
+
+[params.includeObsolete]
+type = "boolean"
+description = "Include obsolete content."
+
+[params.includeSuppressible]
+type = "boolean"
+description = "Include suppressible content."
+
+[params.includeRelationLabels]
+type = "list"
+description = "Relation labels to include, such as `RO` or `PAR`."
+
+[params.includeAdditionalRelationLabels]
+type = "list"
+description = "Additional relation labels (relation attributes) to include, such as `isa`."
+
+[params.pageNumber]
+type = "integer"
+description = "The page to return, from 1."
+
+[params.pageSize]
+type = "integer"
+description = "The number of results on a page."
+
+# Search and metadata.
+
+[[operations]]
+name = "search"
+path = "/search/{version}"
+summary = "Search by term or code; returns CUIs, or source-asserted identifiers with `returnIdType`."
+description = "Returns one page of up to 200 results, as {\"classType\": \"searchResults\", \"results\": [...]}."
+query = ["string", "inputType", "returnIdType", "searchType", "sabs", "semanticTypes", "semanticGroups", "partialSearch", "includeObsolete", "includeSuppressible"]
+
+[[operations]]
+name = "sources"
+path = "/metadata/{version}/sources"
+summary = "The source vocabularies in the release, with their abbreviations."
+
+# Concepts.
+
+[[operations]]
+name = "concept"
+path = "/content/{version}/CUI/{CUI}"
+summary = "A concept: its name, semantic types and counts of atoms, definitions and relations."
+
+[[operations]]
+name = "concept_atoms"
+path = "/content/{version}/CUI/{CUI}/atoms"
+summary = "The atoms of a concept, up to 200."
+query = ["sabs", "ttys", "language", "includeObsolete", "includeSuppressible"]
+
+[[operations]]
+name = "concept_preferred_atom"
+path = "/content/{version}/CUI/{CUI}/atoms/preferred"
+summary = "The default preferred atom of a concept."
+
+[[operations]]
+name = "concept_definitions"
+path = "/content/{version}/CUI/{CUI}/definitions"
+summary = "The source-asserted definitions of a concept."
+query = ["sabs", "pageNumber", "pageSize"]
+
+[[operations]]
+name = "concept_relations"
+path = "/content/{version}/CUI/{CUI}/relations"
+summary = "The relations of a concept to other concepts."
+query = ["sabs", "includeRelationLabels", "includeAdditionalRelationLabels", "includeObsolete", "includeSuppressible", "pageNumber", "pageSize"]
+
+# Atoms.
+
+[[operations]]
+name = "atom"
+path = "/content/{version}/AUI/{AUI}"
+summary = "An atom: its name, term type, language, source and concept."
+
+[[operations]]
+name = "atom_parents"
+path = "/content/{version}/AUI/{AUI}/parents"
+summary = "The immediate parents of an atom."
+query = ["pageNumber", "pageSize"]
+
+[[operations]]
+name = "atom_children"
+path = "/content/{version}/AUI/{AUI}/children"
+summary = "The immediate children of an atom."
+query = ["pageNumber", "pageSize"]
+
+[[operations]]
+name = "atom_ancestors"
+path = "/content/{version}/AUI/{AUI}/ancestors"
+summary = "The ancestors of an atom."
+query = ["pageNumber", "pageSize"]
+
+[[operations]]
+name = "atom_descendants"
+path = "/content/{version}/AUI/{AUI}/descendants"
+summary = "The descendants of an atom."
+query = ["pageNumber", "pageSize"]
+
+# Source-asserted identifiers.
+
+[[operations]]
+name = "source_concept"
+path = "/content/{version}/source/{source}/{id}"
+summary = "A source concept, source descriptor or code."
+
+[[operations]]
+name = "source_atoms"
+path = "/content/{version}/source/{source}/{id}/atoms"
+summary = "The atoms of a source-asserted identifier, up to 200."
+query = ["ttys", "language", "includeObsolete", "includeSuppressible"]
+
+[[operations]]
+name = "source_preferred_atom"
+path = "/content/{version}/source/{source}/{id}/atoms/preferred"
+summary = "The default preferred atom of a source-asserted identifier."
+
+[[operations]]
+name = "source_parents"
+path = "/content/{version}/source/{source}/{id}/parents"
+summary = "The immediate parents of a source-asserted identifier."
+query = ["pageNumber", "pageSize"]
+
+[[operations]]
+name = "source_children"
+path = "/content/{version}/source/{source}/{id}/children"
+summary = "The immediate children of a source-asserted identifier."
+query = ["pageNumber", "pageSize"]
+
+[[operations]]
+name = "source_ancestors"
+path = "/content/{version}/source/{source}/{id}/ancestors"
+summary = "The ancestors of a source-asserted identifier."
+query = ["pageNumber", "pageSize"]
+
+[[operations]]
+name = "source_descendants"
+path = "/content/{version}/source/{source}/{id}/descendants"
+summary = "The descendants of a source-asserted identifier."
+query = ["pageNumber", "pageSize"]
+
+[[operations]]
+name = "source_relations"
+path = "/content/{version}/source/{source}/{id}/relations"
+summary = "The relations of a source-asserted identifier."
+query = ["includeRelationLabels", "includeAdditionalRelationLabels", "includeObsolete", "includeSuppressible", "pageNumber", "pageSize"]
+
+[[operations]]
+name = "source_attributes"
+path = "/content/{version}/source/{source}/{id}/attributes"
+summary = "The attributes of a source-asserted identifier."
+query = ["pageNumber", "pageSize"]
+
+[[operations]]
+name = "crosswalk"
+path = "/crosswalk/{version}/source/{source}/{id}"
+summary = "The identifiers in other vocabularies that share a UMLS concept with a source-asserted identifier."
+query = ["targetSource", "includeObsolete", "includeSuppressible", "pageNumber", "pageSize"]
+
+# Semantic network.
+
+[[operations]]
+name = "semantic_type"
+path = "/semantic-network/{version}/TUI/{TUI}"
+summary = "A semantic type: its name, definition, tree number and semantic group."

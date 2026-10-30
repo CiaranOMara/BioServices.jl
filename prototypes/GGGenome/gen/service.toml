@@ -1,0 +1,50 @@
+# GGGenome, written by hand from https://gggenome.dbcls.jp/en/help.html, which publishes no OpenAPI spec.
+# prototypes/ServiceGen/generate.jl writes src/GGGenome.jl from this file.
+#
+# The whole request is in the path: http[s]://GGGenome.dbcls.jp/db/k/[strand]/[nogap]/sequence[.format]
+# Its options are path segments, some of them optional, and its format is an extension, which OpenAPI cannot express without listing every combination of paths.
+# The service redirects to a canonical URL over http when a segment has its default value (k = 0, or db left out), so k may be left out, and db is always sent.
+
+[service]
+name = "GGGenome"
+title = "GGGenome, ultrafast DNA sequence search"
+docs = "https://gggenome.dbcls.jp/en/help.html"
+base_url = "https://gggenome.dbcls.jp"
+format_by = "extension"
+default_format = "json"
+# GGGenome serves every format but JSON as text/plain; these MIME types name the formats, and are not sent.
+formats = { json = "application/json", txt = "text/tab-separated-values", csv = "text/csv", bed = "text/x-bed", gff = "text/x-gff" }
+# A failed search still returns HTTP 200: as JSON with an `error` field other than "none", or as text that starts with this line.
+errors = { json_field = "error", json_ok = "none", text = "^### ERROR : (.*) ###" }
+
+[params.db]
+default = "hg38"
+description = """
+The database: a genome assembly such as `hg38`, `mm10` or `TAIR10`, or `refseq`; the help page lists them all.
+An unknown name is searched as `hg38`, without an error."""
+
+[params.k]
+type = "integer"
+optional = true
+description = "The maximum number of mismatches and gaps, at most a quarter of the sequence length; 0 when left out."
+
+[params.strand]
+optional = true
+enum = ["+", "-"]
+description = "Search one strand only; both when left out."
+
+[params.nogap]
+type = "boolean"
+literal = "nogap"
+description = "Allow only mismatches, not gaps."
+
+[params.sequence]
+description = "The nucleotide sequence, case insensitive; U is read as T, and ambiguity codes such as N and R are allowed."
+
+[[operations]]
+name = "search"
+path = "/{db}/{k}/{strand}/{nogap}/{sequence}"
+summary = "Search a genome or transcript database for a nucleotide sequence, allowing mismatches and gaps."
+description = """
+Up to 100000 matches are returned.
+JSON gives the database name, any error and the `results`, each with `name`, `strand`, `position`, `position_end`, `sbjct` and an alignment summary."""
